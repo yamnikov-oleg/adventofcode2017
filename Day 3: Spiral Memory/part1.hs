@@ -3,17 +3,24 @@ import           System.Environment (getArgs)
 import           System.Exit        (die)
 import           Text.Read          (readMaybe)
 
-loopOfNumber :: Integer -> Integer
-loopOfNumber num = loopOfNumber' 0 (num-1)
+sumOfNats :: Integer -> Integer
+sumOfNats n = round $ (dn+1) * dn / 2
+    where dn = fromIntegral n :: Double
+
+invSumOfNats :: Double -> Double
+invSumOfNats s =
+    if s == fromIntegral (sumOfNats (round approxSolution))
+        then fromInteger $ round approxSolution
+        else approxSolution
     where
-        loopOfNumber' li num
-            | num - li*8 <= 0 = li
-            | otherwise = loopOfNumber' (li+1) (num-li*8)
+        discriminant = 1.0 + 8.0 * s
+        approxSolution = (-1 + sqrt discriminant) / 2
+
+loopOfNumber :: Integer -> Integer
+loopOfNumber num = ceiling $ invSumOfNats $ (fromIntegral num-1) / 8
 
 loopBase :: Integer -> Integer
-loopBase 0    = 1
-loopBase 1    = 1
-loopBase loop = (loop - 1) * 8 + loopBase (loop - 1)
+loopBase loop = sumOfNats (loop-1) * 8 + 1
 
 loopLength :: Integer -> Integer
 loopLength loop = loop * 8
