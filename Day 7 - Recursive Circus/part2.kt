@@ -46,12 +46,12 @@ class ProgramTree {
     sealed class BranchBalance {
         data class Balanced(
             val totalWeight: Int
-        ): BranchBalance()
+        ) : BranchBalance()
         data class Imbalanced(
             val program: String,
             val actualWeight: Int,
             val requiredWeight: Int
-        ): BranchBalance()
+        ) : BranchBalance()
     }
 
     fun checkBranchBalance(branchRoot: String): BranchBalance {
