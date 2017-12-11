@@ -468,3 +468,11 @@ hs_err_pid*
 
 # GCC build artifacts
 a.out
+
+# Created by https://www.gitignore.io/api/idris
+
+### Idris ###
+*.ibc
+*.o
+
+# End of https://www.gitignore.io/api/idris
