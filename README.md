@@ -16,3 +16,4 @@ Solving [Advent of Code 2017](https://adventofcode.com/2017) in a different lang
 |[Day 10 - Knot Hash](Day%2010%20-%20Knot%20Hash)|Idris|
 |[Day 11 - Hex Ed](Day%2011%20-%20Hex%20Ed)|C|
 |[Day 12 - Digital Plumber](Day%2012%20-%20Digital%20Plumber)|Lua|
+|[Day 13 - Packet Scanners](Day%2013%20-%20Packet%20Scanners)|F#|
