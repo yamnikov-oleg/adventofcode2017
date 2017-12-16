@@ -1,0 +1,16 @@
+{
+  "name": "day14",
+  "version": "1.0.0",
+  "description": "",
+  "main": "day14.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^8.5.1",
+    "typescript": "^2.6.2"
+  }
+}
