@@ -122,6 +122,20 @@ class Bitmap {
     }
 }
 
+class CoordSet extends Bitmap {
+    has(i: number, j: number): boolean {
+        return this.getBit(i, j) === Bit.Set;
+    }
+
+    add(i: number, j: number) {
+        this.setBit(i, j, Bit.Set);
+    }
+
+    delete(i: number, j: number) {
+        this.setBit(i, j, Bit.Free);
+    }
+}
+
 function byteToBits(byte: number): Bit[] {
     const bits = [];
     for (let i = 0; i < 8; i++) {
@@ -150,6 +164,31 @@ function generateBitmap(key: string): Bitmap {
     return bitmap;
 }
 
+function walkRegion(bitmap: Bitmap, oi: number, oj: number, visited: CoordSet) {
+    let lastPass = [[oi, oj]];
+    while (true) {
+        const thisPass = [];
+        for (const [i, j] of lastPass) {
+            const neighbours = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]];
+            for (const [ni, nj] of neighbours) {
+                if (ni < 0 || ni >= bitmap.height) continue;
+                if (nj < 0 || nj >= bitmap.width) continue;
+                if (bitmap.getBit(ni, nj) === Bit.Free) continue;
+                if (visited.has(ni, nj)) continue;
+
+                thisPass.push([ni, nj]);
+            }
+        }
+
+        if (thisPass.length === 0) break;
+
+        for (const [i, j] of thisPass) {
+            visited.add(i, j);
+        }
+        lastPass = thisPass;
+    }
+}
+
 function main() {
     if (process.argv.length < 3) {
         console.log("Bitmap generation key is required");
@@ -158,11 +197,24 @@ function main() {
 
     const key = process.argv[2];
     const bitmap = generateBitmap(key);
+
     let countSet = 0;
     for (const [bit, i, j] of bitmap.bits()) {
-        if (bit == Bit.Set) countSet++;
+        if (bit === Bit.Set) countSet++;
     }
     console.log(`Set bits: ${countSet}`);
+
+    let countRegions = 0;
+    const visited = new CoordSet(128, 128);
+    for (const [bit, i, j] of bitmap.bits()) {
+        if (bit === Bit.Free || visited.has(i, j)) {
+            continue;
+        }
+
+        countRegions++;
+        walkRegion(bitmap, i, j, visited);
+    }
+    console.log(`Regions: ${countRegions}`);
 }
 
 main();
