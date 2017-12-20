@@ -2,7 +2,7 @@ package day16
 
 import java.io.FileNotFoundException
 import java.lang.RuntimeException
-import scala.collection.immutable.Vector
+import scala.collection.mutable.ArraySeq
 import scala.io.Source
 
 sealed abstract class DanceMove
@@ -132,23 +132,30 @@ class MovesParser(input: Iterator[Char]) extends Iterator[DanceMove] {
 }
 
 class Dance {
-  var programs = Vector.range('a', 'q')
+  var programs = ArraySeq.range('a', 'q').toArray
 
   def spin(count: Int): Unit = {
-    val pre = programs.slice(0, programs.length - count)
-    val post = programs.slice(programs.length - count, programs.length)
-    programs = post ++ pre
+    if (count == 0) return
+
+    val sliceIndex = programs.length - count
+    val newPrograms = Array.ofDim[Char](programs.length)
+    var i = 0
+    while (i < programs.length) {
+      if (i < sliceIndex) {
+        newPrograms(i + count) = programs(i)
+      } else {
+        newPrograms(i - sliceIndex) = programs(i)
+      }
+      i += 1
+    }
+    programs = newPrograms
   }
 
   def exchange(pos1: Int, pos2: Int): Unit = {
-    val (min, max) = if (pos1 < pos2) (pos1, pos2) else (pos2, pos1)
-
-    val pre = programs.slice(0, min)
-    val elem1 = programs(min)
-    val inter = programs.slice(min + 1, max)
-    val elem2 = programs(max)
-    val post = programs.slice(max + 1, programs.length)
-    programs = (pre :+ elem2) ++ inter ++ (elem1 +: post)
+    val prog1 = programs(pos1)
+    val prog2 = programs(pos2)
+    programs(pos1) = prog2
+    programs(pos2) = prog1
   }
 
   def partner(progA: Char, progB: Char): Unit = {
@@ -183,7 +190,7 @@ object Main extends App {
   }
 
   val parser = new MovesParser(inputStream)
-  val moves = parser.toList
+  val moves = parser.toArray
   println(s"Parsed ${moves.length} moves")
 
   val dance = new Dance
@@ -195,7 +202,8 @@ object Main extends App {
     if (i % 100 == 0) {
       print(".")
     }
-    moves.foreach (dance.applyMove _)
+
+    moves.foreach(dance.applyMove)
   }
   println
   println(s"Program positions after $dancesCount dances: ${dance.programs.mkString}")
