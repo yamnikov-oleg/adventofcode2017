@@ -476,3 +476,14 @@ a.out
 *.o
 
 # End of https://www.gitignore.io/api/idris
+
+# Created by https://www.gitignore.io/api/scala
+
+### Scala ###
+*.class
+*.log
+
+# End of https://www.gitignore.io/api/scala
+
+# Built solution of day 16
+Day 16 - Permutation Promenade/day16
