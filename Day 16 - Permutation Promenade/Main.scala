@@ -6,11 +6,13 @@ import scala.collection.mutable.ArraySeq
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
+// Product type of all dance moves
 sealed abstract class DanceMove
 case class MoveSpin(count: Int) extends DanceMove
 case class MoveExchange(pos1: Int, pos2: Int) extends DanceMove
 case class MovePartner(progA: Char, progB: Char) extends DanceMove
 
+// State machine for the input parser
 class MovesParser(input: Iterator[Char]) extends Iterator[DanceMove] {
   object States extends Enumeration {
     val Free, Spin, Exchange1, Exchange2,
@@ -132,19 +134,20 @@ class MovesParser(input: Iterator[Char]) extends Iterator[DanceMove] {
   }
 }
 
+// The class of programs dance, performs all the moves
 class Dance {
-  var programs = ArraySeq.range('a', 'q').toArray
+  var programs = ArraySeq.range(Dance.FirstProgram, Dance.ProgramAfterLast).toArray
 
+  // Applies a move map (see Dance.optimize)
   def map(map: Array[Int]): Unit = {
     val newPrograms = programs.clone
-    var i = 0
-    while (i < programs.length) {
+    for (i <- 0 until programs.length) {
       newPrograms(i) = programs(map(i))
-      i += 1
     }
     programs = newPrograms
   }
 
+  // Applies programs substitutions (see Dance.optimize)
   def substitute(map: Map[Char, Char]): Unit = {
     for (i <- 0 until programs.length) {
       programs(i) = map(programs(i))
@@ -153,52 +156,46 @@ class Dance {
 }
 
 object Dance {
-  def spinMap(moveMap: Array[Int], count: Int): Array[Int] = {
-    if (count == 0) return moveMap
+  val ProgramsCount = 16
+  val FirstProgram = 'a'
+  val LastProgram = ('a' + ProgramsCount - 1).toChar
+  val ProgramAfterLast = ('a' + ProgramsCount).toChar
 
-    val newMoveMap = moveMap.clone
-    System.arraycopy(moveMap, 0, newMoveMap, count, moveMap.length - count)
-    System.arraycopy(moveMap, moveMap.length - count, newMoveMap, 0, count)
-    newMoveMap
-  }
-
-  def exchangeMap(moveMap: Array[Int], pos1: Int, pos2: Int): Unit = {
-    val prog1 = moveMap(pos1)
-    val prog2 = moveMap(pos2)
-    moveMap(pos1) = prog2
-    moveMap(pos2) = prog1
-  }
-
+  // Compiles moves array into moves map and substitutions map.
+  // The moves map maps programs' old indices onto their new indices.
+  // The subtitutions map maps programs to be replaced onto the programs they
+  // should be replaced by.
   def optimize(moves: Array[DanceMove]): (Array[Int], Map[Char, Char]) = {
-    var moveMap = Array.ofDim[Int](16)
+    var moveMap = Array.ofDim[Int](Dance.ProgramsCount)
     for (i <- 0 until moveMap.length) {
       moveMap(i) = i
     }
 
-    var invsubs = Map.empty[Char, Char]
-    for (c <- 'a' to 'p') {
-      invsubs += (c -> c)
+    var subs = Map.empty[Char, Char]
+    for (c <- Dance.FirstProgram to Dance.LastProgram) {
+      subs += (c -> c)
     }
 
     moves.foreach {
       _ match {
         case MoveSpin(count) => {
-          moveMap = spinMap(moveMap, count)
+          val (part1, part2) = moveMap.splitAt(moveMap.length - count)
+          moveMap = part2 ++ part1
         }
         case MoveExchange(pos1, pos2) => {
-          exchangeMap(moveMap, pos1, pos2)
+          val prog1 = moveMap(pos1)
+          val prog2 = moveMap(pos2)
+          moveMap(pos1) = prog2
+          moveMap(pos2) = prog1
         }
         case MovePartner(progA, progB) => {
-          val oldInvsubs = invsubs
-          invsubs += (progA -> oldInvsubs(progB))
-          invsubs += (progB -> oldInvsubs(progA))
+          // Find keys of values progA and progB
+          val progA_ = subs.find(p => p._2 == progA).get._1
+          val progB_ = subs.find(p => p._2 == progB).get._1
+          subs += (progA_ -> progB)
+          subs += (progB_ -> progA)
         }
       }
-    }
-
-    var subs = Map.empty[Char, Char]
-    for ((k, v) <- invsubs) {
-      subs += (v -> k)
     }
 
     (moveMap, subs)
@@ -230,21 +227,19 @@ object Main extends App {
   val (moveMap, subs) = Dance.optimize(parsedMoves)
 
   val dance = new Dance
-  var i = 0
-  while (i < dancesCount) {
-    if (i % 1000000 == 0) {
+  for (itn <- 0 until dancesCount) {
+    // Some progress output
+    if (itn % (100*1000*1000) == 0) {
       println
-      print((i/1000000) + "M: ")
+      print((itn/(1000*1000)) + "M: ")
       print(".")
-    } else if (i % 10000 == 0) {
+    } else if (itn % (1000*1000) == 0) {
       print(".")
     }
 
     dance.map(moveMap)
     dance.substitute(subs)
-
-    i += 1
   }
   println
-  println(s"Program positions after $dancesCount dances: ${dance.programs.mkString}")
+  println(s"Programs positions after $dancesCount dances: ${dance.programs.mkString}")
 }
