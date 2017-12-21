@@ -10,7 +10,6 @@ sealed abstract class DanceMove
 case class MoveSpin(count: Int) extends DanceMove
 case class MoveExchange(pos1: Int, pos2: Int) extends DanceMove
 case class MovePartner(progA: Char, progB: Char) extends DanceMove
-case class MoveMap(map: Array[Int]) extends DanceMove
 
 class MovesParser(input: Iterator[Char]) extends Iterator[DanceMove] {
   object States extends Enumeration {
@@ -135,49 +134,20 @@ class MovesParser(input: Iterator[Char]) extends Iterator[DanceMove] {
 
 class Dance {
   var programs = ArraySeq.range('a', 'q').toArray
-  var programPos = ArraySeq.range(0, 16).toArray
 
-  def spin(count: Int): Unit = {
-    if (count == 0) return
-
-    val newPrograms = programs.clone
-    System.arraycopy(programs, 0, newPrograms, count, programs.length - count)
-    System.arraycopy(programs, programs.length - count, newPrograms, 0, count)
-    programs = newPrograms
-  }
-
-  def exchange(pos1: Int, pos2: Int): Unit = {
-    val prog1 = programs(pos1)
-    val prog2 = programs(pos2)
-
-    programs(pos1) = prog2
-    programs(pos2) = prog1
-
-    programPos(prog1 - 'a') = pos2
-    programPos(prog2 - 'a') = pos1
-  }
-
-  def partner(progA: Char, progB: Char): Unit = {
-    exchange(programPos(progA - 'a'), programPos(progB - 'a'))
-  }
-
-  def moveMap(map: Array[Int]): Unit = {
+  def map(map: Array[Int]): Unit = {
     val newPrograms = programs.clone
     var i = 0
     while (i < programs.length) {
       newPrograms(i) = programs(map(i))
-      programPos(newPrograms(i) - 'a') = i
       i += 1
     }
     programs = newPrograms
   }
 
-  def applyMove(move: DanceMove): Unit = {
-    move match {
-      case MoveSpin(count) => spin(count)
-      case MoveExchange(pos1, pos2) => exchange(pos1, pos2)
-      case MovePartner(progA, progB) => partner(progA, progB)
-      case MoveMap(map) => moveMap(map)
+  def substitute(map: Map[Char, Char]): Unit = {
+    for (i <- 0 until programs.length) {
+      programs(i) = map(programs(i))
     }
   }
 }
@@ -199,45 +169,39 @@ object Dance {
     moveMap(pos2) = prog1
   }
 
-  def identityMoveMap(): Array[Int] = {
-    val map = Array.ofDim[Int](16)
-    for (i <- 0 until map.length) {
-      map(i) = i
+  def optimize(moves: Array[DanceMove]): (Array[Int], Map[Char, Char]) = {
+    var moveMap = Array.ofDim[Int](16)
+    for (i <- 0 until moveMap.length) {
+      moveMap(i) = i
     }
-    map
-  }
 
-  def optimize(moves: Array[DanceMove]): Array[DanceMove] = {
-    val newMoves = ArrayBuffer.empty[DanceMove]
-
-    var mapSet = false
-    var moveMap = identityMoveMap
+    var invsubs = Map.empty[Char, Char]
+    for (c <- 'a' to 'p') {
+      invsubs += (c -> c)
+    }
 
     moves.foreach {
       _ match {
         case MoveSpin(count) => {
           moveMap = spinMap(moveMap, count)
-          mapSet = true
         }
         case MoveExchange(pos1, pos2) => {
           exchangeMap(moveMap, pos1, pos2)
-          mapSet = true
         }
         case MovePartner(progA, progB) => {
-          if (mapSet) {
-            newMoves.append(MoveMap(moveMap))
-            moveMap = identityMoveMap
-            mapSet = false
-          }
-          newMoves.append(MovePartner(progA, progB))
-        }
-        case MoveMap(_) => {
-          throw new RuntimeException("MoveMap in an unoptimized moves array")
+          val oldInvsubs = invsubs
+          invsubs += (progA -> oldInvsubs(progB))
+          invsubs += (progB -> oldInvsubs(progA))
         }
       }
     }
 
-    newMoves.toArray
+    var subs = Map.empty[Char, Char]
+    for ((k, v) <- invsubs) {
+      subs += (v -> k)
+    }
+
+    (moveMap, subs)
   }
 }
 
@@ -263,8 +227,7 @@ object Main extends App {
   val parsedMoves = parser.toArray
   println(s"Parsed ${parsedMoves.length} moves")
 
-  val moves = Dance.optimize(parsedMoves)
-  println(s"Optimized to ${moves.length} moves")
+  val (moveMap, subs) = Dance.optimize(parsedMoves)
 
   val dance = new Dance
   var i = 0
@@ -277,11 +240,8 @@ object Main extends App {
       print(".")
     }
 
-    var mi = 0
-    while (mi < moves.length) {
-     dance.applyMove(moves(mi))
-     mi += 1
-    }
+    dance.map(moveMap)
+    dance.substitute(subs)
 
     i += 1
   }
