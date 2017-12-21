@@ -135,6 +135,7 @@ class MovesParser(input: Iterator[Char]) extends Iterator[DanceMove] {
 
 class Dance {
   var programs = ArraySeq.range('a', 'q').toArray
+  var programPos = ArraySeq.range(0, 16).toArray
 
   def spin(count: Int): Unit = {
     if (count == 0) return
@@ -148,18 +149,23 @@ class Dance {
   def exchange(pos1: Int, pos2: Int): Unit = {
     val prog1 = programs(pos1)
     val prog2 = programs(pos2)
+
     programs(pos1) = prog2
     programs(pos2) = prog1
+
+    programPos(prog1 - 'a') = pos2
+    programPos(prog2 - 'a') = pos1
   }
 
   def partner(progA: Char, progB: Char): Unit = {
-    exchange(programs.indexOf(progA), programs.indexOf(progB))
+    exchange(programPos(progA - 'a'), programPos(progB - 'a'))
   }
 
   def moveMap(map: Array[Int]): Unit = {
     val newPrograms = programs.clone
     for (i <- 0 until programs.length) {
       newPrograms(i) = programs(map(i))
+      programPos(newPrograms(i) - 'a') = i
     }
     programs = newPrograms
   }
