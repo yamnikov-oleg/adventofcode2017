@@ -137,17 +137,9 @@ class Dance {
   def spin(count: Int): Unit = {
     if (count == 0) return
 
-    val sliceIndex = programs.length - count
-    val newPrograms = Array.ofDim[Char](programs.length)
-    var i = 0
-    while (i < programs.length) {
-      if (i < sliceIndex) {
-        newPrograms(i + count) = programs(i)
-      } else {
-        newPrograms(i - sliceIndex) = programs(i)
-      }
-      i += 1
-    }
+    val newPrograms = programs.clone
+    System.arraycopy(programs, 0, newPrograms, count, programs.length - count)
+    System.arraycopy(programs, programs.length - count, newPrograms, 0, count)
     programs = newPrograms
   }
 
