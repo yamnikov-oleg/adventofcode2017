@@ -3,12 +3,14 @@ package day16
 import java.io.FileNotFoundException
 import java.lang.RuntimeException
 import scala.collection.mutable.ArraySeq
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 sealed abstract class DanceMove
 case class MoveSpin(count: Int) extends DanceMove
 case class MoveExchange(pos1: Int, pos2: Int) extends DanceMove
 case class MovePartner(progA: Char, progB: Char) extends DanceMove
+case class MoveMap(map: Array[Int]) extends DanceMove
 
 class MovesParser(input: Iterator[Char]) extends Iterator[DanceMove] {
   object States extends Enumeration {
@@ -154,12 +156,80 @@ class Dance {
     exchange(programs.indexOf(progA), programs.indexOf(progB))
   }
 
+  def moveMap(map: Array[Int]): Unit = {
+    val newPrograms = programs.clone
+    for (i <- 0 until programs.length) {
+      newPrograms(i) = programs(map(i))
+    }
+    programs = newPrograms
+  }
+
   def applyMove(move: DanceMove): Unit = {
     move match {
       case MoveSpin(count) => spin(count)
       case MoveExchange(pos1, pos2) => exchange(pos1, pos2)
       case MovePartner(progA, progB) => partner(progA, progB)
+      case MoveMap(map) => moveMap(map)
     }
+  }
+}
+
+object Dance {
+  def spinMap(moveMap: Array[Int], count: Int): Array[Int] = {
+    if (count == 0) return moveMap
+
+    val newMoveMap = moveMap.clone
+    System.arraycopy(moveMap, 0, newMoveMap, count, moveMap.length - count)
+    System.arraycopy(moveMap, moveMap.length - count, newMoveMap, 0, count)
+    newMoveMap
+  }
+
+  def exchangeMap(moveMap: Array[Int], pos1: Int, pos2: Int): Unit = {
+    val prog1 = moveMap(pos1)
+    val prog2 = moveMap(pos2)
+    moveMap(pos1) = prog2
+    moveMap(pos2) = prog1
+  }
+
+  def identityMoveMap(): Array[Int] = {
+    val map = Array.ofDim[Int](16)
+    for (i <- 0 until map.length) {
+      map(i) = i
+    }
+    map
+  }
+
+  def optimize(moves: Array[DanceMove]): Array[DanceMove] = {
+    val newMoves = ArrayBuffer.empty[DanceMove]
+
+    var mapSet = false
+    var moveMap = identityMoveMap
+
+    moves.foreach {
+      _ match {
+        case MoveSpin(count) => {
+          moveMap = spinMap(moveMap, count)
+          mapSet = true
+        }
+        case MoveExchange(pos1, pos2) => {
+          exchangeMap(moveMap, pos1, pos2)
+          mapSet = true
+        }
+        case MovePartner(progA, progB) => {
+          if (mapSet) {
+            newMoves.append(MoveMap(moveMap))
+            moveMap = identityMoveMap
+            mapSet = false
+          }
+          newMoves.append(MovePartner(progA, progB))
+        }
+        case MoveMap(_) => {
+          throw new RuntimeException("MoveMap in an unoptimized moves array")
+        }
+      }
+    }
+
+    newMoves.toArray
   }
 }
 
@@ -182,16 +252,19 @@ object Main extends App {
   }
 
   val parser = new MovesParser(inputStream)
-  val moves = parser.toArray
-  println(s"Parsed ${moves.length} moves")
+  val parsedMoves = parser.toArray
+  println(s"Parsed ${parsedMoves.length} moves")
+
+  val moves = Dance.optimize(parsedMoves)
+  println(s"Optimized to ${moves.length} moves")
 
   val dance = new Dance
-  for (i <- 0 to dancesCount-1) {
-    if (i % 10000 == 0) {
+  for (i <- 0 until dancesCount) {
+    if (i % 100000 == 0) {
       println
       print(i + ": ")
-    }
-    if (i % 100 == 0) {
+      print(".")
+    } else if (i % 1000 == 0) {
       print(".")
     }
 
