@@ -163,9 +163,11 @@ class Dance {
 
   def moveMap(map: Array[Int]): Unit = {
     val newPrograms = programs.clone
-    for (i <- 0 until programs.length) {
+    var i = 0
+    while (i < programs.length) {
       newPrograms(i) = programs(map(i))
       programPos(newPrograms(i) - 'a') = i
+      i += 1
     }
     programs = newPrograms
   }
@@ -265,16 +267,23 @@ object Main extends App {
   println(s"Optimized to ${moves.length} moves")
 
   val dance = new Dance
-  for (i <- 0 until dancesCount) {
-    if (i % 100000 == 0) {
+  var i = 0
+  while (i < dancesCount) {
+    if (i % 1000000 == 0) {
       println
-      print(i + ": ")
+      print((i/1000000) + "M: ")
       print(".")
-    } else if (i % 1000 == 0) {
+    } else if (i % 10000 == 0) {
       print(".")
     }
 
-    moves.foreach(dance.applyMove)
+    var mi = 0
+    while (mi < moves.length) {
+     dance.applyMove(moves(mi))
+     mi += 1
+    }
+
+    i += 1
   }
   println
   println(s"Program positions after $dancesCount dances: ${dance.programs.mkString}")
