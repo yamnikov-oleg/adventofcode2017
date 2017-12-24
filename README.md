@@ -20,3 +20,4 @@ Solving [Advent of Code 2017](https://adventofcode.com/2017) in a different lang
 |[Day 14 - Disk Defragmentation](Day%2014%20-%20Disk%20Defragmentation)|TypeScript|
 |[Day 15 - Dueling Generators](Day%2015%20-%20Dueling%20Generators)|D|
 |[Day 16 - Permutation Promenade](Day%2016%20-%20Permutation%20Promenade)|Scala|
+|[Day 17 - Spinlock](Day%2017%20-%20Spinlock)|Nim|
