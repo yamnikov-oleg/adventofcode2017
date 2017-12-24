@@ -487,3 +487,10 @@ a.out
 
 # Built solution of day 16
 Day 16 - Permutation Promenade/day16
+
+# Created by https://www.gitignore.io/api/nim
+
+### Nim ###
+nimcache/
+
+# End of https://www.gitignore.io/api/nim
