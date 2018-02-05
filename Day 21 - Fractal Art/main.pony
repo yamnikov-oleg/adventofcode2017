@@ -121,17 +121,6 @@ class Pattern
         end
         num
 
-    fun count_1_bits(): U64 =>
-        var cnt: U64 = 0
-        for row in bits.values() do
-            for bit in row.values() do
-                if bit then
-                    cnt = cnt + 1
-                end
-            end
-        end
-        cnt
-
     fun string(): String =>
         var lines = Array[String](bits.size())
 
@@ -182,7 +171,6 @@ class Rulebook
 
     fun derive(p: Pattern): Pattern? =>
         let id = p.id()
-        var deriv = Pattern.zero()
         for rule in rules.values() do
             if rule.from.id() == id then
                 return Pattern.sub(rule.into, 0, 0, rule.into.size())
@@ -190,35 +178,98 @@ class Rulebook
         end
         error
 
-    fun count_1_bits(initial: Pattern, iters: U64): U64? =>
-        if iters <= 0 then
-            return initial.count_1_bits()
+
+class FastRoolbook
+    var rules33_44: Array[(U64, Array[U64])]
+    var rules33_66: Array[(U64, Array[U64])]
+    var rules33_99: Array[(U64, Array[U64])]
+
+    new compile(b: Rulebook)? =>
+        rules33_44 = []
+        var rules33_44_raw: Array[Rule] = []
+        for rule in b.rules.values() do
+            if rule.from.size() == 3 then
+                rules33_44_raw.push(rule)
+                rules33_44.push((rule.from.id(), [rule.into.id()]))
+            end
         end
 
-        if (initial.size() % 2) == 0 then
-            let parts_cnt = initial.size() / 2
-            let deriv = Pattern.zeros(parts_cnt * 3)
-            for i in Range(0, parts_cnt) do
-                for j in Range(0, parts_cnt) do
-                    let part = Pattern.sub(initial, i*2, j*2, 2)
-                    let part_deriv = derive(part)?
-                    deriv.insert(part_deriv, i*3, j*3)
+        rules33_66 = []
+        var rules33_66_raw: Array[Rule] = []
+        for rule in rules33_44_raw.values() do
+            var into = Pattern.zeros(6)
+            var into_ids: Array[U64] = []
+            for i in Range(0, 2) do
+                for j in Range(0, 2) do
+                    let part = Pattern.sub(rule.into, i*2, j*2, 2)
+                    let part_deriv = b.derive(part)?
+                    into.insert(part_deriv, i*3, j*3)
+                    into_ids.push(part_deriv.id())
                 end
             end
-            count_1_bits(deriv, iters-1)?
-        elseif (initial.size() % 3) == 0 then
-            let parts_cnt = initial.size() / 3
-            let deriv = Pattern.zeros(parts_cnt * 4)
-            for i in Range(0, parts_cnt) do
-                for j in Range(0, parts_cnt) do
-                    let part = Pattern.sub(initial, i*3, j*3, 3)
-                    let part_deriv = derive(part)?
-                    deriv.insert(part_deriv, i*4, j*4)
+            rules33_66_raw.push(Rule.create(rule.from, into))
+            rules33_66.push((rule.from.id(), into_ids))
+        end
+
+        rules33_99 = []
+        for rule in rules33_66_raw.values() do
+            var into_ids: Array[U64] = []
+            for i in Range(0, 3) do
+                for j in Range(0, 3) do
+                    let part = Pattern.sub(rule.into, i*2, j*2, 2)
+                    let part_deriv = b.derive(part)?
+                    into_ids.push(part_deriv.id())
                 end
             end
-            count_1_bits(deriv, iters-1)?
+            rules33_99.push((rule.from.id(), into_ids))
+        end
+
+    fun count_1_bits(initial_id: U64, iters: U64): U64? =>
+        if iters == 0 then
+            var bits_cnt: U64 = 0
+            var iid = initial_id
+            while iid > 0 do
+                if (iid % 2) == 1 then
+                    bits_cnt = bits_cnt + 1
+                end
+                iid = iid / 2
+            end
+            bits_cnt
+        elseif iters == 1 then
+            for (from_id, into_ids) in rules33_44.values() do
+                if from_id == initial_id then
+                    var bits_cnt: U64 = 0
+                    for id in into_ids.values() do
+                        bits_cnt = bits_cnt + count_1_bits(id, 0)?
+                    end
+                    return bits_cnt
+                end
+            end
+            Debug.out("Rulebook is incomplete")
+            error
+        elseif iters == 2 then
+            for (from_id, into_ids) in rules33_66.values() do
+                if from_id == initial_id then
+                    var bits_cnt: U64 = 0
+                    for id in into_ids.values() do
+                        bits_cnt = bits_cnt + count_1_bits(id, 0)?
+                    end
+                    return bits_cnt
+                end
+            end
+            Debug.out("Rulebook is incomplete")
+            error
         else
-            Debug.out("Grid size is not divisible by 2 or 3")
+            for (from_id, into_ids) in rules33_99.values() do
+                if from_id == initial_id then
+                    var bits_cnt: U64 = 0
+                    for id in into_ids.values() do
+                        bits_cnt = bits_cnt + count_1_bits(id, iters - 3)?
+                    end
+                    return bits_cnt
+                end
+            end
+            Debug.out("Rulebook is incomplete")
             error
         end
 
@@ -282,7 +333,6 @@ actor Main
                     let from_pat = Pattern.parse(parts(0)?)?
                     let into_pat = Pattern.parse(parts(1)?)?
                     rulebook.add_rule(Rule.create(from_pat, into_pat))
-                    env.out.print(from_pat.string() + " -> " + from_pat.id().string())
                 else
                     env.err.print("Could not parse line " + line_no.string())
                     env.exitcode(1)
@@ -297,10 +347,18 @@ actor Main
             return
         end
 
+        let fast_rulebook =
+            try
+                FastRoolbook.compile(rulebook)?
+            else
+                env.err.print("Could not compile the rulebook")
+                env.exitcode(1)
+                return
+            end
+
         var initial = Pattern.zero()
         try
             initial = Pattern.parse(".#./..#/###")?
-            env.out.print("Initial pattern's id = " + initial.id().string())
         else
             env.err.print("Could not parse initial pattern")
             env.exitcode(1)
@@ -308,9 +366,10 @@ actor Main
         end
 
         try
-            env.out.print(rulebook.count_1_bits(initial, iters_cnt)?.string())
+            let bits_cnt = fast_rulebook.count_1_bits(initial.id(), iters_cnt)?.string()
+            env.out.print("Number of bits: " + bits_cnt.string())
         else
-            env.err.print("error")
+            env.err.print("Could not count bits")
             env.exitcode(1)
             return
         end
