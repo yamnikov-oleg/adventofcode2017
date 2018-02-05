@@ -54,8 +54,8 @@ When searching for a rule to use, rotate and flip the pattern as necessary.  For
 Suppose the book contained the following two rules:
 
 ```
-../.# =&gt; ##./#../...
-.#./..#/### =&gt; #..#/..../..../#..#
+../.# => ##./#../...
+.#./..#/### => #..#/..../..../#..#
 ```
 
 As before, the program begins with this pattern:
@@ -85,7 +85,7 @@ The size of this enhanced grid (`4`) is evenly divisible by `2`, so that rule is
 #.|.#
 ```
 
-Each of these squares matches the same rule (`../.# =&gt; ##./#../...`), three of which require some flipping and rotation to line up with the rule. The output for the rule is the same in all four cases:
+Each of these squares matches the same rule (`../.# => ##./#../...`), three of which require some flipping and rotation to line up with the rule. The output for the rule is the same in all four cases:
 
 ```
 ##.|##.
