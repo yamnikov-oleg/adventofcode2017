@@ -522,3 +522,6 @@ nimcache/
 hs_err_pid*
 
 # End of https://www.gitignore.io/api/java
+
+# Built solution of day 21
+Day 21 - Fractal Art/main
