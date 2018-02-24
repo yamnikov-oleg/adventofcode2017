@@ -25,3 +25,4 @@ Solving [Advent of Code 2017](https://adventofcode.com/2017) in a different lang
 |[Day 19 - A Series of Tubes](Day%2019%20-%20A%20Series%20of%20Tubes)|OCaml|
 |[Day 20 - Particle Swarm](Day%2020%20-%20Particle%20Swarm)|Ruby|
 |[Day 21 - Fractal Art](Day%2021%20-%20Fractal%20Art)|Pony|
+|[Day 22 - Sporifica Virus](Day%2022%20-%20Sporifica%20Virus)|Elixir|
