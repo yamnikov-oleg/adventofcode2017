@@ -26,3 +26,4 @@ Solving [Advent of Code 2017](https://adventofcode.com/2017) in a different lang
 |[Day 20 - Particle Swarm](Day%2020%20-%20Particle%20Swarm)|Ruby|
 |[Day 21 - Fractal Art](Day%2021%20-%20Fractal%20Art)|Pony|
 |[Day 22 - Sporifica Virus](Day%2022%20-%20Sporifica%20Virus)|Elixir|
+|[Day 23 - Coprocessor Conflagration](Day%2023%20-%20Coprocessor%20Conflagration)|Dart|
