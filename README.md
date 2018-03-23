@@ -28,3 +28,4 @@ Solving [Advent of Code 2017](https://adventofcode.com/2017) in a different lang
 |[Day 22 - Sporifica Virus](Day%2022%20-%20Sporifica%20Virus)|Elixir|
 |[Day 23 - Coprocessor Conflagration](Day%2023%20-%20Coprocessor%20Conflagration)|Dart|
 |[Day 24 - Electromagnetic Moat](Day%2024%20-%20Electromagnetic%20Moat)|Crystal|
+|[Day 25 - The Halting Problem](Day%2025%20-%20The%20Halting%20Problem)|Vala|
